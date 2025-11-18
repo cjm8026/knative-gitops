@@ -1,18 +1,13 @@
-# hello-hpa-probe.yaml
 apiVersion: serving.knative.dev/v1
 kind: Service
 metadata:
   name: helloworld-go
   namespace: default
-  # ----------------------------------------------------
-  # (이전에 여기에 있던 HPA 주석은 삭제되었고 올바른 위치로 옮겨짐) #
-  # ----------------------------------------------------
 spec:
   template:
     metadata:
-      # --- 1. HPA 설정 (올바른 위치: spec.template.metadata.annotations) ---
       annotations:
-        autoscaling.knative.dev/class: "k8s.io/hpa" # # Knative AutoScaler 대신 표준 HPA를 사용합니다.
+        autoscaling.knative.dev/class: "k8s.io/hpa"
         autoscaling.knative.dev/metric: "cpu"
         autoscaling.knative.dev/target: "70"
     spec:
@@ -23,21 +18,21 @@ spec:
               value: "Version 3 (HPA+Probe)"
           ports:
             - containerPort: 8080
-          
-          # --- 2. Probe 설정 ---
-          readinessProbe:
-            tcpSocket:
-              port: 8080
-            initialDelaySeconds: 5
 
-          # --- HPA가 계산할 CPU 기준값 ---
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 3
+            periodSeconds: 5
+
           resources:
             requests:
               cpu: "100m"
             limits:
               cpu: "200m"
-              
+
   traffic:
-    # --- 4. v3 (최신 리비전)로 100% 트래픽 전환 ---
     - percent: 100
       latestRevision: true
+
